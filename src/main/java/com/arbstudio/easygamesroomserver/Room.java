@@ -3,15 +3,14 @@ package com.arbstudio.easygamesroomserver;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Data
+
 @ToString
+@Data
 @Builder
 public class Room {
         private String address;
@@ -21,6 +20,8 @@ public class Room {
         private String password;
         @JsonIgnore
         private UUID token;
+        @JsonIgnore
+        private OffsetDateTime lastUpdateTime;
 
         public boolean getPasswordSecured(){
                 if(password == null || password.equals("")){
