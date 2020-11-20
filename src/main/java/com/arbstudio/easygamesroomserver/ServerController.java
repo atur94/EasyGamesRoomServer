@@ -3,6 +3,7 @@ package com.arbstudio.easygamesroomserver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class ServerController {
     Start();
   }
 
+
   public void Start(){
     new Thread(
             () -> {
@@ -33,7 +35,7 @@ public class ServerController {
                     var diff =
                             OffsetDateTime.now().toInstant().toEpochMilli()
                                     - room.getLastUpdateTime().toInstant().toEpochMilli();
-                    if(diff > 5000) return true;
+                    if(diff > 3000) return true;
                     return false;
                   });
                 }
@@ -60,7 +62,7 @@ public class ServerController {
     log.debug(roomHost + " utworzono");
 
     RoomHost tokenizedRoom =
-        new RoomHost(roomHost.getAddress(), roomHost.getName(), roomHost.getPassword());
+        new RoomHost(roomHost.getAddress(), roomHost.getName(), roomHost.getPassword(), roomHost.getPlayers());
     synchronized (servers){
       servers.add(
               Room.builder()
@@ -77,17 +79,17 @@ public class ServerController {
   }
 
   @PutMapping("/servers/update")
-  public RoomStatusUpdate updateServer(@RequestBody RoomStatusUpdate roomStatusUpdate) {
+  public void updateServer(@RequestBody RoomHost roomStatusUpdate) {
     log.debug(roomStatusUpdate + " zaktualizowano");
-    for (Room server : servers) {
-      if (server.getToken() != null) {
-        if (server.getToken().toString().equals(roomStatusUpdate.getToken())) {
-          server.setLastUpdateTime(OffsetDateTime.now());
-          server.setPlayers(roomStatusUpdate.getPlayers());
-        }
+    Room item = servers.stream().filter(room -> room.getToken().equals(roomStatusUpdate.getToken())).findFirst().orElse(null);
+    if(item != null){
+      // Jezeli serwer istenieje już na liście to zaktualizuj. Jezeli nie to go utwórz
+      item.setLastUpdateTime(OffsetDateTime.now());
+    }else {
+      if(!StringUtils.isEmpty(roomStatusUpdate.getToken())){
+        // Jezeli nie istenieje, ale ma już utworzony token to dodaj serwer do listy ponownie
+        servers.add(new Room(roomStatusUpdate.getAddress(), roomStatusUpdate.getName(), roomStatusUpdate.getPlayers(), roomStatusUpdate.getPassword(), roomStatusUpdate.getToken(), OffsetDateTime.now()));
       }
     }
-
-    return roomStatusUpdate;
   }
 }

@@ -15,5 +15,6 @@ public class RoomHost {
   @NonNull private String address;
   @NonNull private String name;
   @NonNull private String password;
+  @NonNull private int players;
   @NonNull private final UUID token = UUID.randomUUID();
 }
